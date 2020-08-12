@@ -53,4 +53,9 @@ emitter.on('get-rules', (gameModuleName, cont) => {
     let notation = data.notation ? `${data.notation}\n` : ``;
 
     return cont.reply = `${rules}${move}${goal}${examples}${notation}`;
-})
+});
+
+emitter.on('list-games', (cont) => {
+    let keys = Array.from(gameModulesMap.keys());
+    cont.reply = keys.join('\n');
+});
