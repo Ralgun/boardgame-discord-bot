@@ -42,7 +42,7 @@ emitter.on('move', (msg, moveNotation, container) => {
 
 emitter.on('get-rules', (gameModuleName, cont) => {
     let gameModule = gameModulesMap.get(gameModuleName);
-    if (!gameModule) return cont.reply("There's no game with that name :(");
+    if (!gameModule) return cont.reply = "There's no game with that name :(";
     
     let data = gameModule.data;
 
