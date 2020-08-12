@@ -39,3 +39,18 @@ emitter.on('move', (msg, moveNotation, container) => {
     container.reply = gameObject.beautify();
     if (gameReply) container.reply += gameReply;
 });
+
+emitter.on('get-rules', (gameModuleName, cont) => {
+    let gameModule = gameModulesMap.get(gameModuleName);
+    if (!gameModule) return cont.reply("There's no game with that name :(");
+    
+    let data = gameModule.data;
+
+    let rules = data.rules ? `${data.rules}\n` : ``;
+    let move = data.move ? `${data.move}\n` : ``;
+    let goal = data.goal ? `${data.goal}\n` : ``;
+    let examples = data.examples ? `${data.examples}\n` : ``;
+    let notation = data.notation ? `${data.notation}\n` : ``;
+
+    return cont.reply = `${rules}${move}${goal}${examples}${notation}`;
+})
