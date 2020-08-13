@@ -59,3 +59,7 @@ emitter.on('list-games', (cont) => {
     let keys = Array.from(gameModulesMap.keys());
     cont.reply = keys.join('\n');
 });
+
+emitter.on('check-game', (gameName, cont) => {
+    return cont.returnedValue = gameModulesMap.get(gameName) != undefined;
+});

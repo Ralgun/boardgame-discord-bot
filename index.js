@@ -1,6 +1,7 @@
 const fs = require('fs');
 const discord = require('discord.js');
 const config = require('./config.json');
+const db = require('./database');
 
 //PLACEHOLDER TODO
 require('./game-manager');
