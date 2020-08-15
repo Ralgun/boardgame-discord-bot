@@ -30,7 +30,7 @@ for (const file of commandFiles) {
     client.commands.set(command.name, command);
 }
 
-client.on('message', msg => {
+client.on('message', async msg => {
     if (!msg.content.startsWith(prefix) || msg.author.bot) return;
 
     const args = msg.content.slice(prefix.length).trim().split(/ +/);
@@ -54,7 +54,8 @@ client.on('message', msg => {
             return msg.channel.send(reply);
         }
 
-        if(command.execute(msg, args) === false) {
+        //TODO put this in then block
+        if(await command.execute(msg, args) === false) {
             let reply = `Oh no! You didn't use the command correctly!`;
             reply += `\n${getCorrectUsage(command)}`;
             return msg.reply(reply);

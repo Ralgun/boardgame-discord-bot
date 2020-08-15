@@ -4,30 +4,34 @@ const db = require('../database');
 module.exports = {
     name: `elo`,
     description: `List elo of player in a specified game`,
-    usage: `<game-name>`,
+    usage: `@<player> <game-name>`,
     args: true,
-    execute(message, args) {
-        
-        let gameCheckCont = {};
+    async execute(message, args) {
+        let targetPlayer = message.mentions.users.first();
 
-        emitter.emit('check-game', args[0], gameCheckCont)
-
-        if (!gameCheckCont.returnedValue) {
-            return message.channel.send(`That game wasn't found, try \`list-games\` command.`);
-        }
-        
-        let cont = {};
-        
-        let row = db.getElo(message.author.id, message.channel, args[0], true, cont);
-        
-        if (row) {
-            row.then(result => {
-                message.channel.send(`Your elo in \`${args[0]}\` is \`${result.elo}\``);
-            });
-        }
-        if (cont.error == "noPlayerFound") {
-            return message.channel.send("You don't have any elo in that game!");
+        if (!targetPlayer) {
+            return false;
         }
 
+        const checkGameCont = {};
+
+        emitter.emit('check-game', args[1], checkGameCont);
+
+        if (!checkGameCont.returnedValue) {
+            return message.channel.send(`I don't know a game by the name \`${args[1]}\`. See \`list-games\` command.`);
+        }
+
+        let row = await db.fetchOne(targetPlayer.id, message.channel.id, args[1]);
+        
+        if (!row) {
+            //Didn't find the row
+            row = db.addOne(targetPlayer.id, message.channel.id, args[1]);
+            if(!row) {
+                //Failed while trying to add the table
+                return message.channel.send(`There was an error while trying to add to the database. :(`);
+            }
+        }
+            
+        return message.channel.send(`\`${targetPlayer.username}\` has \`${row.elo}\` elo in the game \`${args[1]}\``);
     }
 }

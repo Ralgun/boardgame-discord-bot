@@ -10,62 +10,46 @@ const Sequelize = require('sequelize');
 
 const DEFAULT_ELO = 1500;
 
-const tableMap = new Map();
-
-const sequelize = new Sequelize('database', 'user', 'password', {
+const sequelize = new Sequelize('database', 'username', 'password', {
 	host: 'localhost',
 	dialect: 'sqlite',
 	logging: true,
-	// SQLite only
 	storage: 'database.sqlite',
 });
 
-const defaultModel = {
-	playerId: {
-		type: Sequelize.TEXT,
-		unique: true,
-		allowNull: false,
-	},
-	elo: {
-		type: Sequelize.INTEGER,
-		allowNull: false,
-	},
-};
+const eloTable = require('./models/elo')(sequelize, Sequelize.DataTypes);
 
+sequelize.sync().then(async () => {
+	console.log('Database synced');
+}).catch(console.error);
+
+/*
 let testTable = sequelize.define(`<#734534602902863884>-connect-four`, defaultModel, {freezeTableName: true});
 testTable.sync();
 tableMap.set("<#734534602902863884>-connect-four", testTable);
-
+*/
 const container = {};
 
-container.getElo = async function(playerIdArg, channel, game, shouldCreateNewElo, cont) {
-    let table = tableMap.get(`${channel}-${game}`);
-	
-    if (!table) {
-        table = sequelize.define(`${channel}-${game}`, defaultModel, {freezeTableName: true});
-        table.sync();
-        tableMap.set(`${channel}-${game}`, table);
-    }
+async function fetchOne(playerIdArg, channelIdArg, gameArg) {
+	return await eloTable.findOne({ where: { playerId: playerIdArg, channelId: channelIdArg, game: gameArg } });
+}
 
-	const row = await table.findOne({ where: { playerId: playerIdArg } });
-	
-	if (row) {
-		console.log(row.get('elo').toString());
-		return row;
-	}
-	if (shouldCreateNewElo === false) {
-		return cont.error = "noPlayerFound";
-	}
-
+async function addOne(playerIdArg, channelIdArg, gameArg) {
 	try {
-		const newRow = await table.create({
+		return await eloTable.create({
 			playerId: playerIdArg,
-			elo: 1500,
+			channelId: channelIdArg,
+			game: gameArg,
+			elo: DEFAULT_ELO,
 		});
 	}
 	catch (e) {
+		console.log("Failed to write to the database!");
 		console.log(e);
 	}
 }
+
+container.fetchOne = fetchOne;
+container.addOne = addOne;
 
 module.exports = container;
