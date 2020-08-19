@@ -20,9 +20,9 @@ module.exports = {
         if (!checkGameCont.returnedValue) {
             return message.channel.send(`I don't know a game by the name \`${args[1]}\`. See \`list-games\` command.`);
         }
-
-        let row = await db.fetchOne(targetPlayer.id, message.channel.id, args[1]);
         
+        let row = await db.fetchOne(targetPlayer.id, message.channel.id, args[1]);
+
         if (!row) {
             //Didn't find the row
             row = db.addOne(targetPlayer.id, message.channel.id, args[1]);
@@ -32,6 +32,6 @@ module.exports = {
             }
         }
             
-        return message.channel.send(`\`${targetPlayer.username}\` has \`${row.elo}\` elo after \`${row.games_played}\` games of \`${args[1]}\`. Their highest elo being \`${elo.highest_elo}\``);
+        return message.channel.send(`\`${targetPlayer.username}\` has \`${row.elo}\` elo after \`${row.games_played}\` games of \`${args[1]}\`. Their highest elo being \`${row.highest_elo}\``);
     }
 }

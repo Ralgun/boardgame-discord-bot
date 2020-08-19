@@ -51,7 +51,24 @@ async function addOne(playerIdArg, channelIdArg, gameArg) {
 	}
 }
 
+async function updateOne(playerIdArg, channelIdArg, gameArg, newElo, newGamesPlayed) {
+	let row = await fetchOne(playerIdArg, channelIdArg, gameArg);
+	let newHighest_elo = row.highest_elo;
+	if (newElo > newHighest_elo) {
+		newHighest_elo = newElo;
+	}
+
+	try {
+		return await row.update({elo: newElo, highest_elo: newHighest_elo, games_played:newGamesPlayed });
+	}
+	catch (e) {
+		console.log("Failed to update the database!");
+		console.log(e);
+	}
+}
+
 container.fetchOne = fetchOne;
 container.addOne = addOne;
+container.updateOne = updateOne;
 
 module.exports = container;
