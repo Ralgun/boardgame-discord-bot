@@ -11,7 +11,10 @@ module.exports = {
 
         let cont = {};
 
-        if(firstMention) {    //TODO: Once I'm done with the testing, I should check if the second player is the author
+        if (firstMention) {
+            if (firstMention.id == author.id) {
+                return message.channel.send("You can't target yourself!");
+            }
             emitter.emit('create-game', message.channel, author, firstMention, args[0], cont);
             message.channel.send(cont.reply);
             return true;

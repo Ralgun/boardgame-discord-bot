@@ -41,6 +41,8 @@ async function addOne(playerIdArg, channelIdArg, gameArg) {
 			channelId: channelIdArg,
 			game: gameArg,
 			elo: DEFAULT_ELO,
+			highest_elo: DEFAULT_ELO,
+			games_played: 0,
 		});
 	}
 	catch (e) {

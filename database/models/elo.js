@@ -16,5 +16,13 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
+        highest_elo: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        games_played: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
     });
 };

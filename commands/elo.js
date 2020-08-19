@@ -32,6 +32,6 @@ module.exports = {
             }
         }
             
-        return message.channel.send(`\`${targetPlayer.username}\` has \`${row.elo}\` elo in the game \`${args[1]}\``);
+        return message.channel.send(`\`${targetPlayer.username}\` has \`${row.elo}\` elo after \`${row.games_played}\` games of \`${args[1]}\`. Their highest elo being \`${elo.highest_elo}\``);
     }
 }
