@@ -9,7 +9,7 @@ const emitter = require('../event-emitter').emitter;
 const Sequelize = require('sequelize');
 const config = require('../config.json');
 
-const DEFAULT_ELO = config.default-elo;
+const DEFAULT_ELO = config.default_elo;
 
 const sequelize = new Sequelize('database', 'username', 'password', {
 	host: 'localhost',

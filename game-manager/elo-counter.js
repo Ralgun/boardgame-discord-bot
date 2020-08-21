@@ -1,7 +1,7 @@
 const Elo = require('elo-calculator');
 const config = require('../config.json');
 
-const DEFAULT_ELO = config.default-elo;
+const DEFAULT_ELO = config.default_elo;
 
 const elo = new Elo({
     // The rating of which each initialized player will start with
