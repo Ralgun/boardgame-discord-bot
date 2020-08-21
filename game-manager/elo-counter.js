@@ -1,8 +1,11 @@
 const Elo = require('elo-calculator');
+const config = require('../config.json');
+
+const DEFAULT_ELO = config.default-elo;
 
 const elo = new Elo({
     // The rating of which each initialized player will start with
-    rating: 1500,
+    rating: DEFAULT_ELO,
     // The coefficient, called the K-factor, is the maximum possible adjustment per game.
     // Which value is used depends on one or more the following points:
     // 1. The number of games the player has played
