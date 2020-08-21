@@ -2,7 +2,7 @@
 config.json
 
 #database
-*.sqlite
+database.sqlite
 
 # Logs
 logs
