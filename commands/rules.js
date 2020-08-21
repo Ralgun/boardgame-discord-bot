@@ -1,4 +1,4 @@
-const emitter = require('../event-emitter').emitter;
+const gameManager = require('../game-manager/index');
 
 module.exports = {
     name: `rules`,
@@ -7,11 +7,9 @@ module.exports = {
     args: true,
     execute(message, args) {
         let author = message.author;
-
-        let cont = {};
         
-        emitter.emit('get-rules', args[0], cont);
-        author.send(cont.reply, {split: true});
+        let reply = gameManager.getRules('get-rules', args[0]);
+        author.send(reply, {split: true});
         return true;
     }
 }

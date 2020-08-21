@@ -1,6 +1,8 @@
 const emitter = require('../event-emitter').emitter;
 const db = require('../database');
 
+const gameManager = require('../game-manager/index');
+
 module.exports = {
     name: `elo`,
     description: `List elo of player in a specified game`,
@@ -13,11 +15,9 @@ module.exports = {
             return false;
         }
 
-        const checkGameCont = {};
+        let checkGameCont = gameManager.checkGame(args[1]);
 
-        emitter.emit('check-game', args[1], checkGameCont);
-
-        if (!checkGameCont.returnedValue) {
+        if (!checkGameCont) {
             return message.channel.send(`I don't know a game by the name \`${args[1]}\`. See \`list-games\` command.`);
         }
         
@@ -25,12 +25,14 @@ module.exports = {
 
         if (!row) {
             //Didn't find the row
-            row = db.addOne(targetPlayer.id, message.channel.id, args[1]);
+            await db.addOne(targetPlayer.id, message.channel.id, args[1]);
             if(!row) {
                 //Failed while trying to add the table
                 return message.channel.send(`There was an error while trying to add to the database. :(`);
             }
         }
+
+        row = await db.fetchOne(targetPlayer.id, message.channel.id, args[1]);
             
         return message.channel.send(`\`${targetPlayer.username}\` has \`${row.elo}\` elo after \`${row.games_played}\` games of \`${args[1]}\`. Their highest elo being \`${row.highest_elo}\``);
     }

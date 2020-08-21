@@ -1,13 +1,14 @@
-const emitter = require('../event-emitter').emitter;
+const gameManager = require('../game-manager/index');
 
 module.exports = {
     name: `play`,
     description: `Plays a move, see `, //TODO: Help files for games
     usage: `<notation-for-move>`,
     args: true,
-    execute(message, args) {
+    async execute(message, args) {
         let cont = {};
-        emitter.emit('move', message, args[0], cont);
+        await gameManager.move(message, args[0], cont);
         message.channel.send(cont.reply);
+        console.log("Wrote the reply");
     }
 }

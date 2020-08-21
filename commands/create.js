@@ -1,4 +1,4 @@
-const emitter = require('../event-emitter').emitter;
+const gameManager = require('../game-manager/index');
 
 module.exports = {
     name: `create`,
@@ -15,7 +15,7 @@ module.exports = {
             if (firstMention.id == author.id) {
                 return message.channel.send("You can't target yourself!");
             }
-            emitter.emit('create-game', message.channel, author, firstMention, args[0], cont);
+            gameManager.createGame(message.channel, author, firstMention, args[0], cont);
             message.channel.send(cont.reply);
             return true;
         }

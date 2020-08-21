@@ -2,6 +2,9 @@
 //Dependencies
 const emitter = require('../event-emitter').emitter;
 const fs = require('fs');
+const eloCounter = require('./elo-counter');
+const db = require('../database');
+const elo = require('../database/models/elo');
 
 const gameMap = new Map();
 const gameModulesMap = new Map();
@@ -15,7 +18,9 @@ for (const file of gameFiles) {
     gameModulesMap.set(gameModule.name, gameModule);
 }
 
-emitter.on('create-game', (channel, player1, player2, gameModuleName, container) => {
+const container = {};
+
+function createGame(channel, player1, player2, gameModuleName, container) {
     if (gameMap.get(channel)) {
         return container.reply = "There's already a game running in this channel. Please, change channels...";
     }
@@ -24,12 +29,24 @@ emitter.on('create-game', (channel, player1, player2, gameModuleName, container)
     if(!gameModule) return container.reply = `No kind of game named ${gameModuleName} was found. :(`;
 
     let gameObject = new gameModule.Game(player1, player2);
-    gameMap.set(channel, gameObject);
-    container.reply = gameObject.beautify();
-});
+    gameMap.set(channel.id, gameObject);
 
-emitter.on('move', (msg, moveNotation, container) => {
-    let gameObject = gameMap.get(msg.channel);
+    db.fetchOne(player1.id, channel.id, gameModuleName).then((row) => {
+        if (!row) {
+            db.addOne(player1.id, channel.id, gameModuleName);
+        }
+    });
+    db.fetchOne(player2.id, channel.id, gameModuleName).then((row) => {
+        if (!row) {
+            db.addOne(player2.id, channel.id, gameModuleName);
+        }
+    });
+
+    container.reply = gameObject.beautify();
+}
+
+async function move(msg, moveNotation, container) {
+    let gameObject = gameMap.get(msg.channel.id);
 
     if (!gameObject) {
         return container.reply = "There's no game running in this channel! Use the \`create\` command or see \`help create\`.";
@@ -38,9 +55,47 @@ emitter.on('move', (msg, moveNotation, container) => {
     let gameReply = gameObject.move(moveNotation);
     container.reply = gameObject.beautify();
     if (gameReply) container.reply += gameReply;
-});
 
-emitter.on('get-rules', (gameModuleName, cont) => {
+    if (gameObject.gameWonBy == null && !gameObject.isStalemateBool) {
+        return;
+    }
+
+    gameMap.delete(msg.channel);
+    container.reply += `The game between <@${gameObject.player1.id}> and <@${gameObject.player2.id}> is over!`;
+
+    if (gameObject.isStalemateBool) {
+        container.reply += `\nThe game ended in a draw!`;
+    }
+    else {
+        container.reply += `\n<@${gameObject.gameWonBy.id}> won!`;
+    }
+
+    //Elo stuff
+    let winnerNotation = .5;
+
+    if (gameObject.gameWonBy == gameObject.player1) {
+        winnerNotation = 1;
+    }
+    else if (gameObject.gameWonBy == gameObject.player2) {
+        winnerNotation = 0;
+    }
+
+    let p1Row = await db.fetchOne(gameObject.player1.id, msg.channel.id, gameObject.gameName);
+    let p2Row = await db.fetchOne(gameObject.player2.id, msg.channel.id, gameObject.gameName);
+
+    let oldP1Elo = p1Row.elo;
+    let oldP2Elo = p2Row.elo;
+
+    let results = eloCounter.calculateElo(oldP1Elo, p1Row.games_played, p1Row.highest_elo, oldP2Elo, p2Row.games_played, p2Row.highest_elo, winnerNotation);
+
+    container.reply += `\n<@${gameObject.player1}> has now \`${results[0]}\` elo!`;
+    container.reply += `\n<@${gameObject.player2}> has now \`${results[1]}\` elo!`;
+
+    db.updateOne(p1Row.playerId, p1Row.channelId, p1Row.game, results[0], p1Row.games_played + 1);
+    db.updateOne(p2Row.playerId, p2Row.channelId, p2Row.game, results[1], p2Row.games_played + 1);
+}
+
+function getRules(gameModuleName) {
     let gameModule = gameModulesMap.get(gameModuleName);
     if (!gameModule) return cont.reply = "There's no game with that name :(";
     
@@ -52,14 +107,22 @@ emitter.on('get-rules', (gameModuleName, cont) => {
     let examples = data.examples ? `${data.examples}\n` : ``;
     let notation = data.notation ? `${data.notation}\n` : ``;
 
-    return cont.reply = `${rules}${move}${goal}${examples}${notation}`;
-});
+    return `${rules}${move}${goal}${examples}${notation}`;
+}
 
-emitter.on('list-games', (cont) => {
+function listGames() {
     let keys = Array.from(gameModulesMap.keys());
-    cont.reply = keys.join('\n');
-});
+    return keys.join('\n');
+}
 
-emitter.on('check-game', (gameName, cont) => {
-    return cont.returnedValue = gameModulesMap.get(gameName) != undefined;
-});
+function checkGame(gameName) {
+    return gameModulesMap.get(gameName) != undefined;
+}
+
+container.createGame = createGame;
+container.move = move;
+container.getRules = getRules;
+container.listGames = listGames;
+container.checkGame = checkGame;
+
+module.exports = container;

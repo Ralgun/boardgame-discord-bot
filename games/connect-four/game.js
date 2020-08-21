@@ -5,14 +5,17 @@ var cont = {};
 'use strict';
 
 class Game {
-
     //Notes:
     //First player (starting player) is notes as 1, the second is notes as 2, neither is noted as 0
 
     constructor(player1, player2) {
+        this.gameName = 'connect-four';
         this.player1 = player1;
         this.player2 = player2;
         this.firstPlayerOnMove = true;
+
+        this.gameWonBy = null;
+        this.isStalemateBool = false;
 
         //Create the board
         let board = new Array(7);
@@ -41,6 +44,20 @@ class Game {
                 if (this.firstPlayerOnMove) columnArray[i] = 1;
                 else columnArray[i] = 2;
 
+                if (this.hasPlayerWon(column, i)) {
+                    if (this.firstPlayerOnMove) {
+                        this.gameWonBy = this.player1;
+                    }
+                    else {
+                        this.gameWonBy = this.player2;
+                    }
+                    return;
+                }
+                if (this.isStalemate()) {
+                    this.isStalemateBool = true;
+                    return;
+                }
+
                 this.firstPlayerOnMove = !this.firstPlayerOnMove;
 
                 return;
@@ -62,6 +79,66 @@ class Game {
             string += "\n";
         }
         return string;
+    }
+
+    hasPlayerWon(x, y) {
+        let checkDirections = [[1, 0], [0, 1], [1, 1], [1, -1]];
+        let currentColor = this.board[x][y];
+
+        //One because we know there's at least one color
+        let colorsInRow = 1;
+        for (let currentDirectionNumber = 0; currentDirectionNumber < checkDirections.length; currentDirectionNumber++) {
+            let currentDirection = checkDirections[currentDirectionNumber];
+            colorsInRow = 1;
+
+            for (let i = 0; i < 3; i++) {
+                let currentX = x + currentDirection[0] * (1 + i);
+                let currentY = y + currentDirection[1] * (1 + i);
+                if (currentX >= 0 && currentX < this.board.length && currentY >= 0 && currentY < this.board[0].length && 
+                        this.board[currentX][currentY] == currentColor) {
+                    colorsInRow++;
+                }
+                else {
+                    break;
+                }
+            }
+            
+            if (colorsInRow >= 4) {
+                return true;
+            }
+
+            for (let i = 0; i < 3; i++) {
+                let currentX = x + currentDirection[0] * -(1 + i);
+                let currentY = y + currentDirection[1] * -(1 + i);
+                if (currentX >= 0 && currentX < this.board.length && currentY >= 0 && currentY < this.board[0].length && 
+                        this.board[currentX][currentY] == currentColor) {
+                    colorsInRow++;
+                }
+                else {
+                    break;
+                }
+            }
+            
+            if (colorsInRow >= 4) {
+                return true;
+            }
+
+        }
+
+        return false;
+    }
+
+    isStalemate() {
+
+        for (let i = 0; i < this.board.length; i++) {
+            for (let j = 0; j < this.board[0].length; j++) {
+                if (this.board[i][j] == 0) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
 }
