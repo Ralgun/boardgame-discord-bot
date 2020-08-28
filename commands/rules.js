@@ -8,7 +8,7 @@ module.exports = {
     execute(message, args) {
         let author = message.author;
         
-        let reply = gameManager.getRules('get-rules', args[0]);
+        let reply = gameManager.getRules(args[0]);
         author.send(reply, {split: true});
         return true;
     }

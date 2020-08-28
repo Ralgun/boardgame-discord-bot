@@ -21,7 +21,8 @@ for (const file of gameFiles) {
 
 const container = {};
 
-function createGame(channel, player1, player2, gameModuleName, container) {
+function createGame(channel, players, gameModuleName, container) {
+    
     if (gameMap.get(channel)) {
         return container.reply = "There's already a game running in this channel. Please, change channels...";
     }
@@ -29,41 +30,63 @@ function createGame(channel, player1, player2, gameModuleName, container) {
     let gameModule = gameModulesMap.get(gameModuleName);
     if(!gameModule) return container.reply = `No kind of game named ${gameModuleName} was found. :(`;
 
-    let gameObject = new gameModule.Game(player1, player2);
+    let gameObject = new gameModule.Game(players[0], players[1]);
     gameObject.isGameRunning = false;
     gameMap.set(channel.id, gameObject);
 
-    db.fetchOne(player1.id, channel.id, gameModuleName).then((row) => {
-        if (!row) {
-            db.addOne(player1.id, channel.id, gameModuleName);
-        }
-    });
-    db.fetchOne(player2.id, channel.id, gameModuleName).then((row) => {
-        if (!row) {
-            db.addOne(player2.id, channel.id, gameModuleName);
-        }
+    for (let i = 0; i < players.length; i++) {
+        let player = players[i];
+        db.fetchOne(player.id, channel.id, gameModuleName).then((row) => {
+            if (!row) {
+                db.addOne(player.id, channel.id, gameModuleName);
+            }
+        });
+    }
+
+    let allThePlayers = "";
+    players.forEach(player => {
+        allThePlayers += `<@${player.id}>, `
     });
 
-    container.reply = `The game will start after <@${player2.id}> writes \`accept\``;
+    container.reply = `The game will start after ${allThePlayers} writes \`accept\``;
 
-    const filter = m => m.author.id == player2.id && m.content == `accept`;
+    const filter = m => {
+        if (m.content != `accept`) {
+            return false;
+        }
+        console.log("Rovnalo sa accept");
+        let bool = false;
+        players.forEach(player => {
+            if (player.id == m.author.id) {
+            bool = true;
+            }
+        });
+        return bool;
+    }
     const collector = channel.createMessageCollector(filter, { time: 25000 });
 
+    let foundAll = false;
+    let playerMap = new Map();
     collector.on('collect', m => {
-        console.log(`Collected ${m.content}`);
+        console.log("FOUND");
+        playerMap.set(m.author.id, true);
+        if (playerMap.size == players.length) {
+            foundAll = true;
+            collector.stop()
+        };
+    });
+
+    collector.on('end', m => {
+        if (!foundAll) {
+            channel.send('The game wasn\'t accepted!');
+            gameMap.delete(channel);
+            return;
+        }
 
         channel.send(`The game is starting!`);
         channel.send(gameObject.beautify());
         gameObject.isGameRunning = true;
 
-        collector.stop();
-    });
-
-    collector.on('end', m => {
-        if (m.size == 0) {
-            channel.send('The game wasn\'t accepted!');
-            gameMap.delete(channel);
-        }
     });
 
 }
@@ -75,7 +98,11 @@ async function move(msg, moveNotation, container) {
         return container.reply = "There's no game running in this channel! Use the \`create\` command or see \`help create\`.";
     }
     else if (!gameObject.isGameRunning) {
-        return container.reply = "The game wasn't accepted!";
+        return container.reply = "The game still isn't accepted!";
+    }
+
+    if ((gameObject.firstPlayerOnMove && gameObject.player1.id != msg.author.id) || (!gameObject.firstPlayerOnMove && gameObject.player2.id != msg.author.id)) {
+        return container.reply = "It's not your turn!";
     }
 
     let gameReply = gameObject.move(moveNotation);
@@ -86,7 +113,7 @@ async function move(msg, moveNotation, container) {
         return;
     }
 
-    gameMap.delete(msg.channel);
+    gameMap.delete(msg.channel.id);
     container.reply += `The game between <@${gameObject.player1.id}> and <@${gameObject.player2.id}> is over!`;
 
     if (gameObject.isStalemateBool) {
@@ -123,7 +150,7 @@ async function move(msg, moveNotation, container) {
 
 function getRules(gameModuleName) {
     let gameModule = gameModulesMap.get(gameModuleName);
-    if (!gameModule) return cont.reply = "There's no game with that name :(";
+    if (!gameModule) return "There's no game with that name :(";
     
     let data = gameModule.data;
 

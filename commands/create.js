@@ -15,7 +15,7 @@ module.exports = {
             if (firstMention.id == author.id) {
                 return message.channel.send("You can't target yourself!");
             }
-            gameManager.createGame(message.channel, author, firstMention, args[0], cont);
+            gameManager.createGame(message.channel, [author, firstMention], args[0], cont);
             message.channel.send(cont.reply);
             return true;
         }
