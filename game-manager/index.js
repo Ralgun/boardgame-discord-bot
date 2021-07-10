@@ -3,9 +3,9 @@
 const emitter = require('../event-emitter').emitter;
 const fs = require('fs');
 const eloCounter = require('./elo-counter');
-const db = require('../database');
 const elo = require('../database/models/elo');
 const config = require('../config.json');
+const userFactory = require('../user/userFactory');
 
 const gameMap = new Map();
 const gameModulesMap = new Map();
@@ -21,7 +21,7 @@ for (const file of gameFiles) {
 
 const container = {};
 
-function createGame(channel, players, gameModuleName, container) {
+function createGame(channel, guild, players, gameModuleName, container) {
     
     if (gameMap.get(channel)) {
         return container.reply = "There's already a game running in this channel. Please, change channels...";
@@ -36,9 +36,9 @@ function createGame(channel, players, gameModuleName, container) {
 
     for (let i = 0; i < players.length; i++) {
         let player = players[i];
-        db.fetchOne(player.id, channel.id, gameModuleName).then((row) => {
+        userFactory.getOneUser(guild.id, gameModuleName, player.id).then((row) => {
             if (!row) {
-                db.addOne(player.id, channel.id, gameModuleName);
+                userFactory.createNewUser(guild.id, gameModuleName, player.id);
             }
         });
     }
@@ -133,8 +133,8 @@ async function move(msg, moveNotation, container) {
         winnerNotation = 0;
     }
 
-    let p1Row = await db.fetchOne(gameObject.player1.id, msg.channel.id, gameObject.gameName);
-    let p2Row = await db.fetchOne(gameObject.player2.id, msg.channel.id, gameObject.gameName);
+    let p1Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player1.id);
+    let p2Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player2.id);
 
     let oldP1Elo = p1Row.elo;
     let oldP2Elo = p2Row.elo;
@@ -144,8 +144,13 @@ async function move(msg, moveNotation, container) {
     container.reply += `\n<@${gameObject.player1.id}> has now \`${results[0]}\` elo!`;
     container.reply += `\n<@${gameObject.player2.id}> has now \`${results[1]}\` elo!`;
 
-    db.updateOne(p1Row.playerId, p1Row.channelId, p1Row.game, results[0], p1Row.games_played + 1);
-    db.updateOne(p2Row.playerId, p2Row.channelId, p2Row.game, results[1], p2Row.games_played + 1);
+    p1Row.incrementGames();
+    p1Row.elo = results[0];
+    p2Row.incrementGames();
+    p2Row.elo = results[1];
+    
+    p1Row.save();
+    p2Row.save();
 }
 
 function getRules(gameModuleName) {

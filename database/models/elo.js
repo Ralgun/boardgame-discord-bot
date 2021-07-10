@@ -6,11 +6,11 @@ const cont = {};
 
 const schema = new mongoose.Schema({
     userId: {
-        type: Number,
+        type: String,
         required: true
     },
     serverId: {
-        type: Number,
+        type: String,
         required: true
     },
     gameTag: {
@@ -24,6 +24,10 @@ const schema = new mongoose.Schema({
     highestElo: {
         type: Number,
         default: DEFAULT_ELO
+    },
+    gamesPlayed: {
+        type: Number,
+        default: 0
     }
 });
 

@@ -21,6 +21,8 @@ class MongoProvider {
 
     async save(data) {
         const filter = this.tryFindingFilter(data);
+        console.log("aaaaaaaaaaaaaaaaaa")
+        console.log(filter);
         
         return await this.model.findOneAndUpdate(filter, data, { upsert: false, new: false })
     }
@@ -59,7 +61,7 @@ class MongoProvider {
 
 function loadModels() {
     console.log("Loading models...");
-    var normalizedPath = path.join(__dirname, "schemas");
+    var normalizedPath = path.join(__dirname, "models");
 
     fs.readdirSync(normalizedPath).forEach(function(file) {
         const toBeSchema = require("./models/" + file);
@@ -72,6 +74,9 @@ function getModel(collection) {
     if(!mongoProviders.hasOwnProperty(collection)) throw new Error(`Tried getting model ${collection} which doesn't exist!`);
     return mongoProviders[collection];
 }
+
+//TODO: move this
+loadModels();
 
 cont.getModel = getModel;
 

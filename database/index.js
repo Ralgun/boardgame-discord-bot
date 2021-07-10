@@ -2,7 +2,9 @@ const emitter = require('../event-emitter').emitter;
 const config = require('../config.json');
 const mongoose = require('mongoose');
 
-mongoose.connect(config.db['mongodb-host'], {useNewUrlParser: true, useUnifiedTopology: true}, (error) => {
+mongoose.set('debug', true);
+
+mongoose.connect(config['mongodb-host'], {useNewUrlParser: true, useUnifiedTopology: true}, (error) => {
     if (error) console.log(error)
     console.log("Connected!");
 });
