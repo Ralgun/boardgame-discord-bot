@@ -1,6 +1,6 @@
 const fs = require('fs');
 const discord = require('discord.js');
-const config = require('./config.json');
+const config = require('./config');
 const db = require('./database');
 
 //PLACEHOLDER TODO

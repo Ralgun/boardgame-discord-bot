@@ -4,7 +4,7 @@ const emitter = require('../event-emitter').emitter;
 const fs = require('fs');
 const eloCounter = require('./elo-counter');
 const elo = require('../database/models/elo');
-const config = require('../config.json');
+const config = require('../config');
 const userFactory = require('../user/userFactory');
 
 const gameMap = new Map();

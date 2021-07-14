@@ -1,5 +1,5 @@
 const emitter = require('../event-emitter').emitter;
-const config = require('../config.json');
+const config = require('../config');
 const mongoose = require('mongoose');
 
 mongoose.set('debug', true);

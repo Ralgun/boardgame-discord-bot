@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "cross-env ENV=staging node index.js",
     "test": "cross-env ENV=testing mocha -exit"
   },
   "author": "",
