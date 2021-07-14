@@ -1,5 +1,5 @@
 #config
-config.json
+config.js
 
 #database
 database.sqlite
