@@ -91,28 +91,64 @@ function createGame(channel, guild, players, gameModuleName, container) {
 
 }
 
+function moveOrderCheck(gameObject, author, container) {
+
+    if (!gameObject) {
+        container.reply = "There's no game running in this channel! Use the \`create\` command or see \`help create\`.";
+        return false;
+    }
+    else if (!gameObject.isGameRunning) {
+        container.reply = "The game still isn't accepted!";
+        return false;
+    }
+
+    if ((gameObject.firstPlayerOnMove && gameObject.player1.id != author.id) || (!gameObject.firstPlayerOnMove && gameObject.player2.id != author.id)) {
+        container.reply = "It's not your turn!";
+        return false;
+    }
+    return true;
+}
+
+async function moveReaction(user, reaction) {
+    const cont = {};
+    cont.reply = "";
+    let gameObject = gameMap.get(reaction.message.channel.id);
+    if (!moveOrderCheck(gameObject, user, cont)) return;
+    const moveNotation = gameObject.parseReaction(reaction);
+    if (moveNotation == -1) return;
+    let gameReply = gameObject.move(moveNotation);
+    cont.reply = gameObject.beautify();
+    if (gameReply) cont.reply += gameReply;
+    cont.emojis = gameObject.getReactions();
+
+    // Check if the game ended
+    if (gameObject.gameWonBy == null && !gameObject.isStalemateBool) {
+        return cont;
+    }
+    
+    await endGame(reaction.message, cont, gameObject);
+    return cont;
+}
+
 async function move(msg, moveNotation, container) {
     let gameObject = gameMap.get(msg.channel.id);
 
-    if (!gameObject) {
-        return container.reply = "There's no game running in this channel! Use the \`create\` command or see \`help create\`.";
-    }
-    else if (!gameObject.isGameRunning) {
-        return container.reply = "The game still isn't accepted!";
-    }
-
-    if ((gameObject.firstPlayerOnMove && gameObject.player1.id != msg.author.id) || (!gameObject.firstPlayerOnMove && gameObject.player2.id != msg.author.id)) {
-        return container.reply = "It's not your turn!";
-    }
+    if (!moveOrderCheck(gameObject, msg.author, container)) return;
 
     let gameReply = gameObject.move(moveNotation);
     container.reply = gameObject.beautify();
     if (gameReply) container.reply += gameReply;
+    container.emojis = gameObject.getReactions();
 
+    // Check if the game ended
     if (gameObject.gameWonBy == null && !gameObject.isStalemateBool) {
         return;
     }
+    
+    await endGame(msg, container, gameObject);
+}
 
+async function endGame(msg, container, gameObject) {
     gameMap.delete(msg.channel.id);
     container.reply += `The game between <@${gameObject.player1.id}> and <@${gameObject.player2.id}> is over!`;
 
@@ -122,8 +158,6 @@ async function move(msg, moveNotation, container) {
     else {
         container.reply += `\n<@${gameObject.gameWonBy.id}> won!`;
     }
-
-    //Elo stuff
     let winnerNotation = .5;
 
     if (gameObject.gameWonBy == gameObject.player1) {
@@ -182,5 +216,6 @@ container.move = move;
 container.getRules = getRules;
 container.listGames = listGames;
 container.checkGame = checkGame;
+container.moveReaction = moveReaction;
 
 module.exports = container;

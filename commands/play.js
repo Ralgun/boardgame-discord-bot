@@ -8,7 +8,15 @@ module.exports = {
     async execute(message, args) {
         let cont = {};
         await gameManager.move(message, args[0], cont);
-        message.channel.send(cont.reply);
-        console.log("Wrote the reply");
+        message.channel.send(cont.reply).then(async sentMsg => {
+            if (!cont.emojis) return;
+            try {
+                for (let i = 0; i < cont.emojis.length; i++) {
+                    await sentMsg.react(cont.emojis[i]);
+                }
+            } catch (error) {
+			    console.error('One of the emojis failed to react:', error);
+		    }
+        });
     }
 }

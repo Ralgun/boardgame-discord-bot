@@ -7,6 +7,7 @@ var cont = {};
 class Game {
     //Notes:
     //First player (starting player) is notes as 1, the second is notes as 2, neither is noted as 0
+    emojiMoves = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
 
     constructor(player1, player2) {
         this.gameName = 'connect-four';
@@ -67,6 +68,13 @@ class Game {
         return "You can't play there!";
     }
 
+    parseReaction(reaction) {
+        for (let i = 0; i < this.emojiMoves.length; i++) {
+            if (reaction.emoji.name == this.emojiMoves[i]) return i;
+        }
+        return -1;
+    }
+
     beautify() {
         let string = "";
         for (let y = this.board[0].length-1; y >= 0; y--) {
@@ -79,6 +87,10 @@ class Game {
             string += "\n";
         }
         return string;
+    }
+
+    getReactions() {
+        return this.emojiMoves;
     }
 
     hasPlayerWon(x, y) {

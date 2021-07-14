@@ -32,7 +32,6 @@ for (const file of commandFiles) {
 
 client.on('message', async msg => {
     if (!msg.content.startsWith(prefix) || msg.author.bot) return;
-
     const args = msg.content.slice(prefix.length).trim().split(/ +/);
 	const commandName = args.shift().toLowerCase();
 
@@ -68,6 +67,39 @@ client.on('message', async msg => {
         msg.reply(reply);
     }
 
+});
+
+const gameManager = require('./game-manager');
+client.on('messageReactionAdd', async (reaction, user) => {
+    if (user.bot) {
+        return;
+    }
+	// When a reaction is received, check if the structure is partial
+	if (reaction.partial) {
+		// If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
+		try {
+			await reaction.fetch();
+		} catch (error) {
+			console.error('Something went wrong when fetching the message: ', error);
+			// Return as `reaction.message.author` may be undefined/null
+			return;
+		}
+	}
+    let cont = await gameManager.moveReaction(user, reaction);
+    if (cont && cont.reply) {
+        reaction.message.channel.send(cont.reply).then(async sentMsg => {
+            if (!cont.emojis) return;
+            console.log("emojis!");
+            try {
+                for (let i = 0; i < cont.emojis.length; i++) {
+                    await sentMsg.react(cont.emojis[i]);
+                }
+            } catch (error) {
+			    console.error('One of the emojis failed to react:', error);
+		    }
+        });
+    }
+    return;
 });
 
 client.login(config.token);
