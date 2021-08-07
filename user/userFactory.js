@@ -20,7 +20,6 @@ function createUserFromData(data) {
 
 async function getOneUser(serverId, gameTag, userId) {
     let res = await provider.getByFilter({ serverId: serverId, gameTag: gameTag, userId: userId });
-    console.log("aaaaa");
     console.log(res);
     if (res.length < 1) return false;
     res = res[0];

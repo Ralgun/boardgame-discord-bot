@@ -8,17 +8,67 @@ module.exports = {
     execute(message, args) {
         let firstMention = message.mentions.users.first();
         let author = message.author;
+        let channel = message.channel;
 
         let cont = {};
 
-        if (firstMention) {
-            if (firstMention.id == author.id) {
-                return message.channel.send("You can't target yourself!");
-            }
-            gameManager.createGame(message.channel, message.guild, [author, firstMention], args[0], cont);
-            message.channel.send(cont.reply);
-            return true;
+        if (!firstMention) {
+            return false;
         }
-        return false;
+     
+        if (firstMention.id == author.id) {
+            return channel.send("You can't target yourself!");
+        }
+        if (gameManager.isChannelTaken(channel.id)) {
+            return channel.send("There already is a game in this channel!");                
+        }
+
+        // Wait for consent
+        let allThePlayers = "";
+        players.forEach(player => {
+            allThePlayers += `<@${player.id}>, `
+        });
+
+        channel.send(`The game will start after ${allThePlayers} write \`accept\``);
+
+        const filter = m => {
+            if (m.content != `accept`) {
+                return false;
+            }
+            let bool = false;
+            players.forEach(player => {
+                if (player.id == m.author.id) {
+                bool = true;
+                }
+            });
+            return bool;
+        }
+        const collector = channel.createMessageCollector(filter, { time: 25000 });
+
+        let foundAll = false;
+        let playerMap = new Map();
+        collector.on('collect', m => {
+            console.log("FOUND");
+            playerMap.set(m.author.id, true);
+            if (playerMap.size == players.length) {
+                foundAll = true;
+                collector.stop()
+            };
+        });
+
+        collector.on('end', m => {
+            if (!foundAll) {
+                channel.send('The game wasn\'t accepted!');
+                return;
+            }
+
+            channel.send(`The game is starting!`);
+            let game = await gameManager.createGame(channel, guild, [author, firstMention], args[0]);
+            if (!game) {
+                return channel.send("Failed to create the game. Please, try again.");
+            }
+            channel.send(game.getBoard());
+        });
+        return true;
     }
 }

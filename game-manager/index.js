@@ -1,11 +1,12 @@
 
 //Dependencies
-const emitter = require('../event-emitter').emitter;
 const fs = require('fs');
 const eloCounter = require('./elo-counter');
 const elo = require('../database/models/elo');
 const config = require('../config');
 const userFactory = require('../user/userFactory');
+const GameWrapper = require('./game');
+const gameEvents  = require('./game-events');
 
 const gameMap = new Map();
 const gameModulesMap = new Map();
@@ -21,6 +22,10 @@ for (const file of gameFiles) {
 
 const container = {};
 
+function isChannelTaken(channelId) {
+    return !gameMap.get(channelId);
+}
+
 function createGame(channel, guild, players, gameModuleName, container) {
     
     if (gameMap.get(channel)) {
@@ -31,8 +36,8 @@ function createGame(channel, guild, players, gameModuleName, container) {
     if(!gameModule) return container.reply = `No kind of game named ${gameModuleName} was found. :(`;
 
     let gameObject = new gameModule.Game(players[0], players[1]);
-    gameObject.isGameRunning = false;
-    gameMap.set(channel.id, gameObject);
+    let wrappedGame = new GameWrapper(players[0].id, players[1].id, gameObject);
+    gameMap.set(channel.id, wrappedGame);
 
     for (let i = 0; i < players.length; i++) {
         let player = players[i];
@@ -42,71 +47,6 @@ function createGame(channel, guild, players, gameModuleName, container) {
             }
         });
     }
-
-    let allThePlayers = "";
-    players.forEach(player => {
-        allThePlayers += `<@${player.id}>, `
-    });
-
-    container.reply = `The game will start after ${allThePlayers} writes \`accept\``;
-
-    const filter = m => {
-        if (m.content != `accept`) {
-            return false;
-        }
-        console.log("Rovnalo sa accept");
-        let bool = false;
-        players.forEach(player => {
-            if (player.id == m.author.id) {
-            bool = true;
-            }
-        });
-        return bool;
-    }
-    const collector = channel.createMessageCollector(filter, { time: 25000 });
-
-    let foundAll = false;
-    let playerMap = new Map();
-    collector.on('collect', m => {
-        console.log("FOUND");
-        playerMap.set(m.author.id, true);
-        if (playerMap.size == players.length) {
-            foundAll = true;
-            collector.stop()
-        };
-    });
-
-    collector.on('end', m => {
-        if (!foundAll) {
-            channel.send('The game wasn\'t accepted!');
-            gameMap.delete(channel);
-            return;
-        }
-
-        channel.send(`The game is starting!`);
-        channel.send(gameObject.beautify());
-        gameObject.isGameRunning = true;
-
-    });
-
-}
-
-function moveOrderCheck(gameObject, author, container) {
-
-    if (!gameObject) {
-        container.reply = "There's no game running in this channel! Use the \`create\` command or see \`help create\`.";
-        return false;
-    }
-    else if (!gameObject.isGameRunning) {
-        container.reply = "The game still isn't accepted!";
-        return false;
-    }
-
-    if ((gameObject.firstPlayerOnMove && gameObject.player1.id != author.id) || (!gameObject.firstPlayerOnMove && gameObject.player2.id != author.id)) {
-        container.reply = "It's not your turn!";
-        return false;
-    }
-    return true;
 }
 
 async function moveReaction(user, reaction) {
@@ -149,42 +89,43 @@ async function move(msg, moveNotation, container) {
 }
 
 async function endGame(msg, container, gameObject) {
-    gameMap.delete(msg.channel.id);
-    container.reply += `The game between <@${gameObject.player1.id}> and <@${gameObject.player2.id}> is over!`;
 
-    if (gameObject.isStalemateBool) {
-        container.reply += `\nThe game ended in a draw!`;
-    }
-    else {
-        container.reply += `\n<@${gameObject.gameWonBy.id}> won!`;
-    }
-    let winnerNotation = .5;
+    // gameMap.delete(msg.channel.id);
+    // container.reply += `The game between <@${gameObject.player1.id}> and <@${gameObject.player2.id}> is over!`;
 
-    if (gameObject.gameWonBy == gameObject.player1) {
-        winnerNotation = 1;
-    }
-    else if (gameObject.gameWonBy == gameObject.player2) {
-        winnerNotation = 0;
-    }
+    // if (gameObject.isStalemateBool) {
+    //     container.reply += `\nThe game ended in a draw!`;
+    // }
+    // else {
+    //     container.reply += `\n<@${gameObject.gameWonBy.id}> won!`;
+    // }
+    // let winnerNotation = .5;
 
-    let p1Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player1.id);
-    let p2Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player2.id);
+    // if (gameObject.gameWonBy == gameObject.player1) {
+    //     winnerNotation = 1;
+    // }
+    // else if (gameObject.gameWonBy == gameObject.player2) {
+    //     winnerNotation = 0;
+    // }
 
-    let oldP1Elo = p1Row.elo;
-    let oldP2Elo = p2Row.elo;
+    // let p1Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player1.id);
+    // let p2Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player2.id);
 
-    let results = eloCounter.calculateElo(oldP1Elo, p1Row.games_played, p1Row.highest_elo, oldP2Elo, p2Row.games_played, p2Row.highest_elo, winnerNotation);
+    // let oldP1Elo = p1Row.elo;
+    // let oldP2Elo = p2Row.elo;
 
-    container.reply += `\n<@${gameObject.player1.id}> has now \`${results[0]}\` elo!`;
-    container.reply += `\n<@${gameObject.player2.id}> has now \`${results[1]}\` elo!`;
+    // let results = eloCounter.calculateElo(oldP1Elo, p1Row.games_played, p1Row.highest_elo, oldP2Elo, p2Row.games_played, p2Row.highest_elo, winnerNotation);
 
-    p1Row.incrementGames();
-    p1Row.elo = results[0];
-    p2Row.incrementGames();
-    p2Row.elo = results[1];
+    // container.reply += `\n<@${gameObject.player1.id}> has now \`${results[0]}\` elo!`;
+    // container.reply += `\n<@${gameObject.player2.id}> has now \`${results[1]}\` elo!`;
+
+    // p1Row.incrementGames();
+    // p1Row.elo = results[0];
+    // p2Row.incrementGames();
+    // p2Row.elo = results[1];
     
-    p1Row.save();
-    p2Row.save();
+    // p1Row.save();
+    // p2Row.save();
 }
 
 function getRules(gameModuleName) {
@@ -211,11 +152,16 @@ function checkGame(gameName) {
     return gameModulesMap.get(gameName) != undefined;
 }
 
+gameEvents.subToGameEnd((channelId, guildId) => {
+    gameMap.delete(channelId);
+})
+
 container.createGame = createGame;
 container.move = move;
 container.getRules = getRules;
 container.listGames = listGames;
 container.checkGame = checkGame;
 container.moveReaction = moveReaction;
+container.isChannelTaken = isChannelTaken;
 
 module.exports = container;
