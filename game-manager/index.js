@@ -49,43 +49,8 @@ function createGame(channel, guild, players, gameModuleName, container) {
     }
 }
 
-async function moveReaction(user, reaction) {
-    const cont = {};
-    cont.reply = "";
-    let gameObject = gameMap.get(reaction.message.channel.id);
-    if (!moveOrderCheck(gameObject, user, cont)) return;
-    const moveNotation = gameObject.parseReaction(reaction);
-    if (moveNotation == -1) return;
-    let gameReply = gameObject.move(moveNotation);
-    cont.reply = gameObject.beautify();
-    if (gameReply) cont.reply += gameReply;
-    cont.emojis = gameObject.getReactions();
-
-    // Check if the game ended
-    if (gameObject.gameWonBy == null && !gameObject.isStalemateBool) {
-        return cont;
-    }
-    
-    await endGame(reaction.message, cont, gameObject);
-    return cont;
-}
-
-async function move(msg, moveNotation, container) {
-    let gameObject = gameMap.get(msg.channel.id);
-
-    if (!moveOrderCheck(gameObject, msg.author, container)) return;
-
-    let gameReply = gameObject.move(moveNotation);
-    container.reply = gameObject.beautify();
-    if (gameReply) container.reply += gameReply;
-    container.emojis = gameObject.getReactions();
-
-    // Check if the game ended
-    if (gameObject.gameWonBy == null && !gameObject.isStalemateBool) {
-        return;
-    }
-    
-    await endGame(msg, container, gameObject);
+function getGame(channelId) {
+    return gameMap.get(channelId);
 }
 
 async function endGame(msg, container, gameObject) {
@@ -163,5 +128,6 @@ container.listGames = listGames;
 container.checkGame = checkGame;
 container.moveReaction = moveReaction;
 container.isChannelTaken = isChannelTaken;
+container.getGame = getGame;
 
 module.exports = container;

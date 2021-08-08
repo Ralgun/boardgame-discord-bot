@@ -1,3 +1,4 @@
+const gameStates = require('../../game-manager/game-states');
 //Code for connect four game
 
 var cont = {};
@@ -8,16 +9,14 @@ class Game {
     //Notes:
     //First player (starting player) is notes as 1, the second is notes as 2, neither is noted as 0
     emojiMoves = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
+    gameState = gameStates.STILL_PLAYING;
 
     constructor(player1, player2) {
         this.gameName = 'connect-four';
         this.player1 = player1;
         this.player2 = player2;
         this.firstPlayerOnMove = true;
-
-        this.gameWonBy = null;
-        this.isStalemateBool = false;
-
+ 
         //Create the board
         let board = new Array(7);
         for (let i = 0; i < board.length; i++) {
@@ -47,15 +46,15 @@ class Game {
 
                 if (this.hasPlayerWon(column, i)) {
                     if (this.firstPlayerOnMove) {
-                        this.gameWonBy = this.player1;
+                        this.gameState = gameStates.FIRST_PLAYER_WIN;
                     }
                     else {
-                        this.gameWonBy = this.player2;
+                        this.gameState = gameStates.SECOND_PLAYER_WIN;
                     }
                     return;
                 }
                 if (this.isStalemate()) {
-                    this.isStalemateBool = true;
+                    this.gameState = gameStates.STALEMATE;
                     return;
                 }
 
