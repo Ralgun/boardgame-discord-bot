@@ -9,12 +9,10 @@ class Game {
     //Notes:
     //First player (starting player) is notes as 1, the second is notes as 2, neither is noted as 0
     emojiMoves = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
-    gameState = gameStates.STILL_PLAYING;
+    state = gameStates.STILL_PLAYING;
+    gameName = 'connect-four';
 
-    constructor(player1, player2) {
-        this.gameName = 'connect-four';
-        this.player1 = player1;
-        this.player2 = player2;
+    constructor() {
         this.firstPlayerOnMove = true;
  
         //Create the board
@@ -33,8 +31,8 @@ class Game {
     move(moveNotation) {
         let column;
         if (!isNaN(moveNotation)) column = parseInt(moveNotation);
-        else return "You need to use a **number**!"
-        if (column < 0 || column > this.board.length-1) return "The notation must be a number corresponding to the column (0-6).";
+        else return {success: false, reply:"You need to use a **number**!"};
+        if (column < 0 || column > this.board.length-1) return {success: false, reply: "The notation must be a number corresponding to the column (0-6)."};
 
 
         let columnArray = this.board[column];
@@ -46,21 +44,21 @@ class Game {
 
                 if (this.hasPlayerWon(column, i)) {
                     if (this.firstPlayerOnMove) {
-                        this.gameState = gameStates.FIRST_PLAYER_WIN;
+                        this.state = gameStates.FIRST_PLAYER_WIN;
                     }
                     else {
-                        this.gameState = gameStates.SECOND_PLAYER_WIN;
+                        this.state = gameStates.SECOND_PLAYER_WIN;
                     }
-                    return;
+                    return {success: true};
                 }
                 if (this.isStalemate()) {
-                    this.gameState = gameStates.STALEMATE;
-                    return;
+                    this.state = gameStates.STALEMATE;
+                    return {success: true};
                 }
 
                 this.firstPlayerOnMove = !this.firstPlayerOnMove;
 
-                return;
+                return {success: true};
             }
         }
 
@@ -69,7 +67,7 @@ class Game {
 
     parseReaction(reaction) {
         for (let i = 0; i < this.emojiMoves.length; i++) {
-            if (reaction.emoji.name == this.emojiMoves[i]) return i;
+            if (reaction == this.emojiMoves[i]) return i;
         }
         return -1;
     }
@@ -88,7 +86,7 @@ class Game {
         return string;
     }
 
-    getReactions() {
+    getEmojis() {
         return this.emojiMoves;
     }
 

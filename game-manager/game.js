@@ -1,6 +1,8 @@
 const gameStates = require('./game-states');
 const returnCodes = require('./return-codes');
 const gameEvents = require('./game-events');
+const userFactory = require('../user/userFactory');
+const eloCounter = require('./elo-counter');
 
 class GameWrapper {
     channelId;
@@ -23,57 +25,62 @@ class GameWrapper {
         if (!settings) {
             settings = {};
         }
-        if (!moveOrderCheck(playerId)) {
-            return;
+        if (!this.#moveOrderCheck(playerId)) {
+            return {reply: "It's not your move", success: false};
         };
 
         if (settings.reaction) {
             // Parse reactions
             moveNotation = this.#translateReaction(moveNotation);
             if (moveNotation === returnCodes.GENERIC_FAIL) {
-                return;
+                return {reply: "", success: false};
             }
         }
 
-        let gameReply = gameObject.move(moveNotation);
+        let {reply, success} = this.game.move(moveNotation);
+        if (success) {
+            this.playerToMove = this.playerToMove == 1 ? 0 : 1;
+        }
 
         // Check if the game ended
-        if (game.state === gameStates.STILL_PLAYING) {
-            return gameReply;
+        if (this.game.state == gameStates.STILL_PLAYING) {
+            return {reply: reply, success: true};
         }
-        
-        await endGame(msg, container, gameObject);
+        console.log("The game ended");
+        return {reply: await this.#endGame(), success: true};
     }
 
-    #endGame() {
+    async #endGame() {
         gameEvents.emitGameEnd(this.channelId, this.guildId);
+        this.isGameOver = true;
 
-        if (game.gameState == gameStates.STALEMATE) {
-            container.reply += `\nThe game ended in a draw!`;
+        let reply = "";
+        if (this.game.state == gameStates.STALEMATE) {
+            reply += `\nThe game ended in a draw!`;
         }
         else {
             // TODO
-            container.reply += `\n<@${gameObject.gameWonBy.id}> won!`;
+            reply += `\n<@${this.game.state == gameStates.FIRST_PLAYER_WIN ? this.player0Id : this.player1Id}> won!`;
         }
         let winnerNotation = .5;
 
-        if (game.gameState == gameStates.FIRST_PLAYER_WIN) {
+        if (this.game.state == gameStates.FIRST_PLAYER_WIN) {
             winnerNotation = 1;
         }
-        else if (game.gameState == gameStates.SECOND_PLAYER_WIN) {
+        else if (this.game.state == gameStates.SECOND_PLAYER_WIN) {
             winnerNotation = 0;
         }
 
-        let p1Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player1.id);
-        let p2Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player2.id);
+        let p1Row = await userFactory.getOneUser(this.guildId, this.game.gameName, this.player0Id);
+        let p2Row = await userFactory.getOneUser(this.guildId, this.game.gameName, this.player1Id);
 
         let oldP1Elo = p1Row.elo;
         let oldP2Elo = p2Row.elo;
 
         let results = eloCounter.calculateElo(oldP1Elo, p1Row.games_played, p1Row.highest_elo, oldP2Elo, p2Row.games_played, p2Row.highest_elo, winnerNotation);
 
-        container.reply += `\n<@${gameObject.player1.id}> has now \`${results[0]}\` elo!`;
-        container.reply += `\n<@${gameObject.player2.id}> has now \`${results[1]}\` elo!`;
+        reply += `\n<@${this.player0Id}> has now \`${results[0]}\` elo!`;
+        reply += `\n<@${this.player1Id}> has now \`${results[1]}\` elo!`;
 
         p1Row.incrementGames();
         p1Row.elo = results[0];
@@ -82,23 +89,24 @@ class GameWrapper {
         
         p1Row.save();
         p2Row.save();
+        return reply;
     }
 
     #translateReaction(moveReaction) {
-        return game.parseReaction(moveReaction);
+        return this.game.parseReaction(moveReaction);
     }
 
     #moveOrderCheck(playerId) {
-        return ((playerToMove == 0 && playerId == this.player0Id) || 
-        (playerToMove == 1 && playerId == this.player1Id))
+        return ((this.playerToMove == 0 && playerId == this.player0Id) || 
+        (this.playerToMove == 1 && playerId == this.player1Id))
     }
 
     getBoard() {
-
+        return this.game.beautify();
     }
 
-    getReactions() {
-
+    getEmojis() {
+        return this.game.getEmojis();
     }
 
 }

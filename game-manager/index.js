@@ -23,7 +23,7 @@ for (const file of gameFiles) {
 const container = {};
 
 function isChannelTaken(channelId) {
-    return !gameMap.get(channelId);
+    return !!gameMap.get(channelId);
 }
 
 function createGame(channel, guild, players, gameModuleName, container) {
@@ -36,7 +36,7 @@ function createGame(channel, guild, players, gameModuleName, container) {
     if(!gameModule) return container.reply = `No kind of game named ${gameModuleName} was found. :(`;
 
     let gameObject = new gameModule.Game(players[0], players[1]);
-    let wrappedGame = new GameWrapper(players[0].id, players[1].id, gameObject);
+    let wrappedGame = new GameWrapper(channel.id, guild.id, players[0].id, players[1].id, gameObject);
     gameMap.set(channel.id, wrappedGame);
 
     for (let i = 0; i < players.length; i++) {
@@ -47,50 +47,11 @@ function createGame(channel, guild, players, gameModuleName, container) {
             }
         });
     }
+    return wrappedGame;
 }
 
 function getGame(channelId) {
     return gameMap.get(channelId);
-}
-
-async function endGame(msg, container, gameObject) {
-
-    // gameMap.delete(msg.channel.id);
-    // container.reply += `The game between <@${gameObject.player1.id}> and <@${gameObject.player2.id}> is over!`;
-
-    // if (gameObject.isStalemateBool) {
-    //     container.reply += `\nThe game ended in a draw!`;
-    // }
-    // else {
-    //     container.reply += `\n<@${gameObject.gameWonBy.id}> won!`;
-    // }
-    // let winnerNotation = .5;
-
-    // if (gameObject.gameWonBy == gameObject.player1) {
-    //     winnerNotation = 1;
-    // }
-    // else if (gameObject.gameWonBy == gameObject.player2) {
-    //     winnerNotation = 0;
-    // }
-
-    // let p1Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player1.id);
-    // let p2Row = await userFactory.getOneUser(msg.guild.id, gameObject.gameName, gameObject.player2.id);
-
-    // let oldP1Elo = p1Row.elo;
-    // let oldP2Elo = p2Row.elo;
-
-    // let results = eloCounter.calculateElo(oldP1Elo, p1Row.games_played, p1Row.highest_elo, oldP2Elo, p2Row.games_played, p2Row.highest_elo, winnerNotation);
-
-    // container.reply += `\n<@${gameObject.player1.id}> has now \`${results[0]}\` elo!`;
-    // container.reply += `\n<@${gameObject.player2.id}> has now \`${results[1]}\` elo!`;
-
-    // p1Row.incrementGames();
-    // p1Row.elo = results[0];
-    // p2Row.incrementGames();
-    // p2Row.elo = results[1];
-    
-    // p1Row.save();
-    // p2Row.save();
 }
 
 function getRules(gameModuleName) {
@@ -122,11 +83,9 @@ gameEvents.subToGameEnd((channelId, guildId) => {
 })
 
 container.createGame = createGame;
-container.move = move;
 container.getRules = getRules;
 container.listGames = listGames;
 container.checkGame = checkGame;
-container.moveReaction = moveReaction;
 container.isChannelTaken = isChannelTaken;
 container.getGame = getGame;
 

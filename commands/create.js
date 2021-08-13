@@ -5,10 +5,12 @@ module.exports = {
     description: `Creates a game`,
     usage: `<name-of-the-game> @<other-player>`,
     args: true,
-    execute(message, args) {
+    async execute(message, args) {
         let firstMention = message.mentions.users.first();
         let author = message.author;
         let channel = message.channel;
+        let guild = message.guild;
+        const players = [message.author, firstMention];
 
         let cont = {};
 
@@ -56,7 +58,7 @@ module.exports = {
             };
         });
 
-        collector.on('end', m => {
+        collector.on('end', async m => {
             if (!foundAll) {
                 channel.send('The game wasn\'t accepted!');
                 return;
@@ -67,7 +69,17 @@ module.exports = {
             if (!game) {
                 return channel.send("Failed to create the game. Please, try again.");
             }
-            channel.send(game.getBoard());
+            channel.send(game.getBoard()).then(async sentMsg => {
+                const emojis = game.getEmojis();
+                if (!emojis) return;
+                try {
+                    for (let i = 0; i < emojis.length; i++) {
+                        await sentMsg.react(emojis[i]);
+                    }
+                } catch (error) {
+                    console.error('One of the emojis failed to react:', error);
+                }
+            });;
         });
         return true;
     }

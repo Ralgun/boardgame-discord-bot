@@ -6,13 +6,24 @@ module.exports = {
     usage: `<notation-for-move>`,
     args: true,
     async execute(message, args) {
-        let cont = {};
-        await gameManager.move(message, args[0], cont);
-        message.channel.send(cont.reply).then(async sentMsg => {
-            if (!cont.emojis) return;
+        const game = gameManager.getGame(message.channel.id);
+        if (!game) {
+            return;
+        }
+        let {reply, success} = await game.move(args[0], message.author.id);
+        if (!reply) reply = "";
+        if (game.isGameOver) {
+            message.channel.send(reply);
+            return;
+        }
+        reply += game.getBoard();
+        message.channel.send(reply).then(async sentMsg => {
+            const emojis = game.getEmojis();
+            console.log(emojis);
+            if (!emojis) return;
             try {
-                for (let i = 0; i < cont.emojis.length; i++) {
-                    await sentMsg.react(cont.emojis[i]);
+                for (let i = 0; i < emojis.length; i++) {
+                    await sentMsg.react(emojis[i]);
                 }
             } catch (error) {
 			    console.error('One of the emojis failed to react:', error);

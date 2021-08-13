@@ -85,14 +85,22 @@ client.on('messageReactionAdd', async (reaction, user) => {
 			return;
 		}
 	}
-    let cont = await gameManager.moveReaction(user, reaction);
-    if (cont && cont.reply) {
-        reaction.message.channel.send(cont.reply).then(async sentMsg => {
-            if (!cont.emojis) return;
+    const game = gameManager.getGame(reaction.message.channel.id);
+    let {reply, success} = await game.move(reaction.emoji.name, user.id, {reaction:true});
+    if (!reply) reply = "";
+    if (success) {
+        if (game.isGameOver) {
+            reaction.message.channel.send(reply);
+            return;
+        }
+        const emojis = game.getEmojis();
+        reply += game.getBoard();
+        reaction.message.channel.send(reply).then(async sentMsg => {
+            if (!emojis) return;
             console.log("emojis!");
             try {
-                for (let i = 0; i < cont.emojis.length; i++) {
-                    await sentMsg.react(cont.emojis[i]);
+                for (let i = 0; i < emojis.length; i++) {
+                    await sentMsg.react(emojis[i]);
                 }
             } catch (error) {
 			    console.error('One of the emojis failed to react:', error);
