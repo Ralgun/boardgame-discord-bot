@@ -8,7 +8,7 @@ var cont = {};
 class Game {
     //Notes:
     //First player (starting player) is notes as 1, the second is notes as 2, neither is noted as 0
-    emojiMoves = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣'];
+    buttons = ["1", "2", "3", "4", "5", "6", "7"];
     state = gameStates.STILL_PLAYING;
     gameName = 'connect-four';
 
@@ -29,10 +29,11 @@ class Game {
 
     //For connect four we only need a number
     move(moveNotation) {
+        moveNotation--;
         let column;
         if (!isNaN(moveNotation)) column = parseInt(moveNotation);
         else return {success: false, reply:"You need to use a **number**!"};
-        if (column < 0 || column > this.board.length-1) return {success: false, reply: "The notation must be a number corresponding to the column (0-6)."};
+        if (column < 0 || column > this.board.length-1) return {success: false, reply: "The notation must be a number corresponding to the column (1-7)."};
 
 
         let columnArray = this.board[column];
@@ -86,8 +87,8 @@ class Game {
         return string;
     }
 
-    getEmojis() {
-        return this.emojiMoves;
+    getButtons() {
+        return this.buttons;
     }
 
     hasPlayerWon(x, y) {

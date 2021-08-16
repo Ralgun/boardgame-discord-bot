@@ -1,12 +1,9 @@
 const fs = require('fs');
-const discord = require('discord.js');
+const {Client, Intents, Collection} = require('discord.js');
 const config = require('./config');
 const db = require('./database');
 
-//PLACEHOLDER TODO
-require('./game-manager');
-
-const client = new discord.Client();
+const client = new Client({ intents: [Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 
 const prefix = config.prefix;
 
@@ -20,7 +17,7 @@ client.on('ready', () => {
     console.log(`Bot is up and running as ${client.user.tag}`);
 });
 
-client.commands = new discord.Collection();
+client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
@@ -30,13 +27,18 @@ for (const file of commandFiles) {
     client.commands.set(command.name, command);
 }
 
-client.on('message', async msg => {
+function searchForCommand(commandName) {
+    return client.commands.get(commandName) 
+        || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+}
+
+client.on('messageCreate', async msg => {
     if (!msg.content.startsWith(prefix) || msg.author.bot) return;
+    msg.user = msg.author;
     const args = msg.content.slice(prefix.length).trim().split(/ +/);
 	const commandName = args.shift().toLowerCase();
 
-    let command = client.commands.get(commandName) 
-        || client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+    let command = searchForCommand(commandName);
 
     if (!command) return msg.channel.send(`Sorry, ${msg.author}, I don't know that command :(`);
 
@@ -62,52 +64,38 @@ client.on('message', async msg => {
 
     } catch (error) {
         console.error(error);
-        let reply = `There was an error trying to execute that command!`;
+        let reply = `There was an error trying to execute that command.`;
         reply += `\n${getCorrectUsage(command)}`;
         msg.reply(reply);
     }
 
 });
 
-const gameManager = require('./game-manager');
-client.on('messageReactionAdd', async (reaction, user) => {
-    if (user.bot) {
+client.on('interactionCreate', async (button) => {
+    if (!button.isButton()) return;
+    button.deferUpdate();
+    button.guild = button.member.guild;
+    button.channel = await client.channels.fetch(button.channelId);
+    const args = button.customId.trim().split(/ +/);
+	const type = args.shift().toLowerCase();
+
+    if (type != "command") {
         return;
-    }
-	// When a reaction is received, check if the structure is partial
-	if (reaction.partial) {
-		// If the message this reaction belongs to was removed, the fetching might result in an API error which should be handled
-		try {
-			await reaction.fetch();
-		} catch (error) {
-			console.error('Something went wrong when fetching the message: ', error);
-			// Return as `reaction.message.author` may be undefined/null
-			return;
-		}
-	}
-    const game = gameManager.getGame(reaction.message.channel.id);
-    let {reply, success} = await game.move(reaction.emoji.name, user.id, {reaction:true});
-    if (!reply) reply = "";
-    if (success) {
-        if (game.isGameOver) {
-            reaction.message.channel.send(reply);
-            return;
+    } 
+    const commandName = args.shift().toLowerCase();
+    let command = searchForCommand(commandName);
+    if (!command) throw new Error("Button is trying to execute a command that doesn't exist");
+    try {
+        if(await command.execute(button, args) === false) {
+            let reply = `Oh no! You didn't use the command correctly!`;
+            reply += `\n${getCorrectUsage(command)}`;
+            return msg.reply(reply);
         }
-        const emojis = game.getEmojis();
-        reply += game.getBoard();
-        reaction.message.channel.send(reply).then(async sentMsg => {
-            if (!emojis) return;
-            console.log("emojis!");
-            try {
-                for (let i = 0; i < emojis.length; i++) {
-                    await sentMsg.react(emojis[i]);
-                }
-            } catch (error) {
-			    console.error('One of the emojis failed to react:', error);
-		    }
-        });
+
+    } catch (error) {
+        console.error(error);
     }
-    return;
+
 });
 
 client.login(config.token);

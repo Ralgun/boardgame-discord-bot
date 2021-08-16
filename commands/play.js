@@ -1,3 +1,4 @@
+const { MessageActionRow, MessageButton } = require('discord.js');
 const gameManager = require('../game-manager/index');
 
 module.exports = {
@@ -10,24 +11,34 @@ module.exports = {
         if (!game) {
             return;
         }
-        let {reply, success} = await game.move(args[0], message.author.id);
+        let {reply, success} = await game.move(args[0], message.user.id);
         if (!reply) reply = "";
         if (game.isGameOver) {
             message.channel.send(reply);
             return;
         }
         reply += game.getBoard();
-        message.channel.send(reply).then(async sentMsg => {
-            const emojis = game.getEmojis();
-            console.log(emojis);
-            if (!emojis) return;
-            try {
-                for (let i = 0; i < emojis.length; i++) {
-                    await sentMsg.react(emojis[i]);
-                }
-            } catch (error) {
-			    console.error('One of the emojis failed to react:', error);
-		    }
+
+        // Creating buttons
+        let buttonTexts = game.getButtons();
+        let rows = [];
+        let row = new MessageActionRow();
+        rows.push(row);
+        let i = 0;
+        buttonTexts.forEach(but => {
+            row.addComponents(new MessageButton()
+                .setStyle("PRIMARY")
+                .setLabel(but)
+                .setCustomId(`command play ${but}`)
+            );
+            if (i++ >= 4) {
+                i = 0;
+                row = new MessageActionRow();
+                rows.push(row);
+            }
         });
+        
+
+        message.channel.send({content: reply, components: rows});
     }
 }

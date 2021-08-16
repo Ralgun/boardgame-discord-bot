@@ -1,4 +1,5 @@
 const gameManager = require('../game-manager/index');
+const { MessageActionRow, MessageButton } = require('discord.js');
 
 module.exports = {
     name: `create`,
@@ -7,7 +8,7 @@ module.exports = {
     args: true,
     async execute(message, args) {
         let firstMention = message.mentions.users.first();
-        let author = message.author;
+        let author = message.user;
         let channel = message.channel;
         let guild = message.guild;
         const players = [message.author, firstMention];
@@ -45,7 +46,7 @@ module.exports = {
             });
             return bool;
         }
-        const collector = channel.createMessageCollector(filter, { time: 25000 });
+        const collector = channel.createMessageCollector({filter, time: 25000 });
 
         let foundAll = false;
         let playerMap = new Map();
@@ -69,17 +70,28 @@ module.exports = {
             if (!game) {
                 return channel.send("Failed to create the game. Please, try again.");
             }
-            channel.send(game.getBoard()).then(async sentMsg => {
-                const emojis = game.getEmojis();
-                if (!emojis) return;
-                try {
-                    for (let i = 0; i < emojis.length; i++) {
-                        await sentMsg.react(emojis[i]);
-                    }
-                } catch (error) {
-                    console.error('One of the emojis failed to react:', error);
+
+            // Creating buttons
+            let buttonTexts = game.getButtons();
+            let rows = [];
+            let row = new MessageActionRow();
+            rows.push(row);
+            let i = 0;
+            buttonTexts.forEach(but => {
+                row.addComponents(new MessageButton()
+                    .setStyle("PRIMARY")
+                    .setLabel(but)
+                    .setCustomId(`command play ${but}`)
+                );
+                if (i++ >= 4) {
+                    i = 0;
+                    row = new MessageActionRow();
+                    rows.push(row);
                 }
-            });;
+            });
+
+
+            message.channel.send({content: game.getBoard(), components: rows});
         });
         return true;
     }

@@ -21,21 +21,10 @@ class GameWrapper {
         this.game = game;
     }
 
-    async move(moveNotation, playerId, settings) {
-        if (!settings) {
-            settings = {};
-        }
+    async move(moveNotation, playerId) {
         if (!this.#moveOrderCheck(playerId)) {
             return {reply: "It's not your move", success: false};
         };
-
-        if (settings.reaction) {
-            // Parse reactions
-            moveNotation = this.#translateReaction(moveNotation);
-            if (moveNotation === returnCodes.GENERIC_FAIL) {
-                return {reply: "", success: false};
-            }
-        }
 
         let {reply, success} = this.game.move(moveNotation);
         if (success) {
@@ -92,10 +81,6 @@ class GameWrapper {
         return reply;
     }
 
-    #translateReaction(moveReaction) {
-        return this.game.parseReaction(moveReaction);
-    }
-
     #moveOrderCheck(playerId) {
         return ((this.playerToMove == 0 && playerId == this.player0Id) || 
         (this.playerToMove == 1 && playerId == this.player1Id))
@@ -105,8 +90,8 @@ class GameWrapper {
         return this.game.beautify();
     }
 
-    getEmojis() {
-        return this.game.getEmojis();
+    getButtons() {
+        return this.game.getButtons();
     }
 
 }
