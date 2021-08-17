@@ -32,8 +32,8 @@ class Game {
         moveNotation--;
         let column;
         if (!isNaN(moveNotation)) column = parseInt(moveNotation);
-        else return {success: false, reply:"You need to use a **number**!"};
-        if (column < 0 || column > this.board.length-1) return {success: false, reply: "The notation must be a number corresponding to the column (1-7)."};
+        else return {success: false, reply:"You need to use a **number**!\n"};
+        if (column < 0 || column > this.board.length-1) return {success: false, reply: "The notation must be a number corresponding to the column (1-7).\n"};
 
 
         let columnArray = this.board[column];

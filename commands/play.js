@@ -12,6 +12,9 @@ module.exports = {
             return;
         }
         let {reply, success} = await game.move(args[0], message.user.id);
+        if (!success && message.isButton()) {
+            return;
+        }
         if (!reply) reply = "";
         if (game.isGameOver) {
             message.channel.send(reply);

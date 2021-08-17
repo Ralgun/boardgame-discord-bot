@@ -34,6 +34,7 @@ function searchForCommand(commandName) {
 
 client.on('messageCreate', async msg => {
     if (!msg.content.startsWith(prefix) || msg.author.bot) return;
+    msg.isButton = () => { return false; };
     msg.user = msg.author;
     const args = msg.content.slice(prefix.length).trim().split(/ +/);
 	const commandName = args.shift().toLowerCase();
@@ -73,6 +74,7 @@ client.on('messageCreate', async msg => {
 
 client.on('interactionCreate', async (button) => {
     if (!button.isButton()) return;
+    button.isButton = () => { return true; };
     button.deferUpdate();
     button.guild = button.member.guild;
     button.channel = await client.channels.fetch(button.channelId);

@@ -23,12 +23,14 @@ class GameWrapper {
 
     async move(moveNotation, playerId) {
         if (!this.#moveOrderCheck(playerId)) {
-            return {reply: "It's not your move", success: false};
+            return {reply: "It's not your move\n", success: false};
         };
 
         let {reply, success} = this.game.move(moveNotation);
         if (success) {
             this.playerToMove = this.playerToMove == 1 ? 0 : 1;
+        } else {
+            return {reply: reply, success: false};
         }
 
         // Check if the game ended
