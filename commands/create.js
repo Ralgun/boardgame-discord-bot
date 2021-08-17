@@ -1,3 +1,4 @@
+const embedHelper = require('../helpers/embedCreator');
 const gameManager = require('../game-manager/index');
 const { MessageActionRow, MessageButton } = require('discord.js');
 
@@ -91,7 +92,7 @@ module.exports = {
             });
 
 
-            message.channel.send({content: game.getBoard(), components: rows});
+            message.channel.send({components: rows, embeds: [embedHelper.getBoardEmbed(game.getPlayerIdToMove(), game.getBoard())]});
         });
         return true;
     }

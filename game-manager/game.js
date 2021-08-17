@@ -83,9 +83,15 @@ class GameWrapper {
         return reply;
     }
 
+    getPlayerIdToMove() {
+        if (this.playerToMove == 0) {
+            return this.player0Id;
+        }
+        return this.player1Id;
+    }
+
     #moveOrderCheck(playerId) {
-        return ((this.playerToMove == 0 && playerId == this.player0Id) || 
-        (this.playerToMove == 1 && playerId == this.player1Id))
+        return this.getPlayerIdToMove() == playerId;
     }
 
     getBoard() {

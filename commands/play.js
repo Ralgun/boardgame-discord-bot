@@ -1,5 +1,6 @@
 const { MessageActionRow, MessageButton } = require('discord.js');
 const gameManager = require('../game-manager/index');
+const embedHelper = require('../helpers/embedCreator');
 
 module.exports = {
     name: `play`,
@@ -20,7 +21,6 @@ module.exports = {
             message.channel.send(reply);
             return;
         }
-        reply += game.getBoard();
 
         // Creating buttons
         let buttonTexts = game.getButtons();
@@ -42,6 +42,6 @@ module.exports = {
         });
         
 
-        message.channel.send({content: reply, components: rows});
+        message.channel.send({components: rows, embeds: [embedHelper.getBoardEmbed(game.getPlayerIdToMove(), game.getBoard(), reply)]});
     }
 }
