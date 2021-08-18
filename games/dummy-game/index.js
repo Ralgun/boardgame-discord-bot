@@ -3,7 +3,7 @@ const data = require('./data.json');
 
 var cont = {};
 
-cont.Game = game.Game;
+cont.Game = game;
 cont.name = "dummy-game";
 cont.data = data;
 

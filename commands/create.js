@@ -74,6 +74,10 @@ module.exports = {
 
             // Creating buttons
             let buttonTexts = game.getButtons();
+            if (!buttonTexts) {
+                message.channel.send({embeds: [embedHelper.getBoardEmbed(game.getPlayerIdToMove(), game.getBoard())]});
+                return true;
+            }
             let rows = [];
             let row = new MessageActionRow();
             rows.push(row);

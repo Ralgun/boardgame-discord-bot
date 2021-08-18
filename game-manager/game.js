@@ -99,6 +99,7 @@ class GameWrapper {
     }
 
     getButtons() {
+        if (!this.game.getButtons) return undefined;
         return this.game.getButtons();
     }
 

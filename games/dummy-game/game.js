@@ -2,6 +2,7 @@ const gameStates = require('../../game-manager/game-states');
 
 class DummyGame {
     state = gameStates.STILL_PLAYING;
+    gameName = "dummy-game";
     move(moveNotation) {
         switch (moveNotation) {
             case "stalemate":
@@ -18,4 +19,10 @@ class DummyGame {
         }
         return {success: true, reply: "Valid"};
     }
+
+    beautify() {
+        return "Dummy board";
+    }
 }
+
+module.exports = DummyGame;
