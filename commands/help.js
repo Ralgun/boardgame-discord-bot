@@ -7,15 +7,17 @@ module.exports = {
 	usage: '[command name]',
 	cooldown: 5,
 	execute(message, args) {
-		const data = [];
+		let data = "";
         const { commands } = message.client;
 
         if (!args.length) {
-            data.push('Here\'s a list of all my commands:');
-            data.push(commands.map(command => command.name).join(', '));
-            data.push(`\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`);
+            data += 'Here\'s a list of all my commands:\n';
+            data += commands.map(command => command.name).join(', ');
+            data += `\nYou can send \`${prefix}help [command name]\` to get info on a specific command!`;
 
-            return message.author.send(data, { split: true })
+            console.log(data);
+
+            return message.author.send(data)
                 .then(() => {
                     if (message.channel.type === 'dm') return;
                     message.reply('I\'ve sent you a DM with all my commands!');
