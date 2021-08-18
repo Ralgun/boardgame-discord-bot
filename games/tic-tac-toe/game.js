@@ -9,10 +9,8 @@ class Game {
     //Notes:
     //First player (starting player) is notes as 1, the second is notes as 2, neither is noted as 0
 
-    constructor(player1, player2) {
+    constructor() {
         this.gameName = 'tic-tac-toe';
-        this.player1 = player1;
-        this.player2 = player2;
         this.firstPlayerOnMove = true;
 
         //Create the board

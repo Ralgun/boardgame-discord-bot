@@ -7,6 +7,7 @@ const config = require('../config');
 const userFactory = require('../user/userFactory');
 const GameWrapper = require('./game');
 const gameEvents  = require('./game-events');
+const { env } = require('process');
 
 const gameMap = new Map();
 const gameModulesMap = new Map();
@@ -17,6 +18,9 @@ for (const file of gameFiles) {
 
     // set a new item in the Collection
     // with the key as the command name and the value as the exported module
+
+    // Ignore the dummy game used for testing when on production
+    if (gameModule.name == "dummy-game" && process.env.ENV == "production") continue;
     gameModulesMap.set(gameModule.name, gameModule);
 }
 
@@ -35,7 +39,7 @@ function createGame(channel, guild, players, gameModuleName, container) {
     let gameModule = gameModulesMap.get(gameModuleName);
     if(!gameModule) return container.reply = `No kind of game named ${gameModuleName} was found. :(`;
 
-    let gameObject = new gameModule.Game(players[0], players[1]);
+    let gameObject = new gameModule.Game();
     let wrappedGame = new GameWrapper(channel.id, guild.id, players[0].id, players[1].id, gameObject);
     gameMap.set(channel.id, wrappedGame);
 
