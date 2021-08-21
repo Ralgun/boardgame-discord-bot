@@ -8,6 +8,7 @@ const DEFAULT_ELO = config['default_elo'];
 const cont = {};
 
 async function createNewUser(serverId, gameTag, userId) {
+    
     let user = new User(serverId, gameTag, userId, DEFAULT_ELO, DEFAULT_ELO, 0);
     await user.create();
 

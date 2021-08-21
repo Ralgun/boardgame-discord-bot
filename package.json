@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env ENV=staging node index.js",
-    "test": "cross-env ENV=testing mocha -exit"
+    "test": "cross-env ENV=testing mocha --timeout 5000 -exit"
   },
   "author": "",
   "license": "ISC",

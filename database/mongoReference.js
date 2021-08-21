@@ -21,7 +21,6 @@ class MongoProvider {
 
     async save(data) {
         const filter = this.tryFindingFilter(data);
-        console.log("aaaaaaaaaaaaaaaaaa")
         console.log(filter);
         
         return await this.model.findOneAndUpdate(filter, data, { upsert: false, new: false })
