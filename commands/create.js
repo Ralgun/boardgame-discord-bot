@@ -67,7 +67,7 @@ module.exports = {
             }
 
             channel.send(`The game is starting!`);
-            let game = await gameManager.createGame(channel, guild, [author, firstMention], args[0]);
+            let game = await gameManager.createGame(channel.id, guild.id, [author.id, firstMention.id], args[0]);
             if (!game) {
                 return channel.send("Failed to create the game. Please, try again.");
             }

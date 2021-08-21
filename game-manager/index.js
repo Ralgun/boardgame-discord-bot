@@ -1,13 +1,9 @@
 
 //Dependencies
 const fs = require('fs');
-const eloCounter = require('./elo-counter');
-const elo = require('../database/models/elo');
-const config = require('../config');
 const userFactory = require('../user/userFactory');
 const GameWrapper = require('./game');
 const gameEvents  = require('./game-events');
-const { env } = require('process');
 
 const gameMap = new Map();
 const gameModulesMap = new Map();
@@ -33,21 +29,25 @@ function isChannelTaken(channelId) {
 function createGame(channel, guild, players, gameModuleName, container) {
     
     if (gameMap.get(channel)) {
-        return container.reply = "There's already a game running in this channel. Please, change channels...";
+        container.reply = "There's already a game running in this channel. Please, change channels...";
+        return;
     }
 
     let gameModule = gameModulesMap.get(gameModuleName);
-    if(!gameModule) return container.reply = `No kind of game named ${gameModuleName} was found. :(`;
+    if(!gameModule) {
+        container.reply = `No kind of game named ${gameModuleName} was found. :(`;
+        return;
+    }
 
     let gameObject = new gameModule.Game();
-    let wrappedGame = new GameWrapper(channel.id, guild.id, players[0].id, players[1].id, gameObject);
-    gameMap.set(channel.id, wrappedGame);
+    let wrappedGame = new GameWrapper(channel, guild, players[0], players[1], gameObject);
+    gameMap.set(channel, wrappedGame);
 
     for (let i = 0; i < players.length; i++) {
         let player = players[i];
-        userFactory.getOneUser(guild.id, gameModuleName, player.id).then((row) => {
+        userFactory.getOneUser(guild, gameModuleName, player).then((row) => {
             if (!row) {
-                userFactory.createNewUser(guild.id, gameModuleName, player.id);
+                userFactory.createNewUser(guild, gameModuleName, player);
             }
         });
     }
@@ -82,6 +82,14 @@ function checkGame(gameName) {
     return gameModulesMap.get(gameName) != undefined;
 }
 
+function removeGame(channelId) {
+    return gameMap.delete(channelId);
+}
+
+function removeAllGames() {
+    gameMap.clear();
+}
+
 gameEvents.subToGameEnd((channelId, guildId) => {
     gameMap.delete(channelId);
 })
@@ -92,5 +100,7 @@ container.listGames = listGames;
 container.checkGame = checkGame;
 container.isChannelTaken = isChannelTaken;
 container.getGame = getGame;
+container.removeGame = removeGame;
+container.removeAllGames = removeAllGames;
 
 module.exports = container;

@@ -1,4 +1,3 @@
-const { doesNotMatch } = require('assert');
 require('../database/index');
 const assert = require('assert');
 const userTable = require('../database/mongoReference').getModel('user');
