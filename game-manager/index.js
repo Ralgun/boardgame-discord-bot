@@ -16,7 +16,7 @@ for (const file of gameFiles) {
     // with the key as the command name and the value as the exported module
 
     // Ignore the dummy game used for testing when on production
-    if (gameModule.name == "dummy-game" && process.env.ENV == "production") continue;
+    if (gameModule.isForTesting && process.env.ENV == "production") continue;
     gameModulesMap.set(gameModule.name, gameModule);
 }
 
