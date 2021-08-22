@@ -6,6 +6,7 @@ module.exports = {
     description: `Sets stuff`,
     usage: `@<other-player> <name-of-the-game> <elo>`,
     args: true,
+    isForTesting: true,
     async execute(message, args) {
         let firstMention = message.mentions.users.first();
         let author = message.author;

@@ -21,6 +21,7 @@ client.commands = new Collection();
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
+    if (command.isForTesting && process.env.ENV == "production") continue;
 
     // set a new item in the Collection
     // with the key as the command name and the value as the exported module
