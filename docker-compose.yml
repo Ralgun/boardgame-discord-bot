@@ -1,0 +1,16 @@
+version: "0.1.0"
+services:
+  bot:
+    image: ghcr.io/ralgun/boardgame-discord-bot:latest
+    volumes:
+      - "/opt/karmabot/config.prod.json:/srv/karmabot/config.prod.json"
+    links:
+      - redis
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    volumes:
+      - ./data:/data/db
+    ports:
+      - '27018:27017'

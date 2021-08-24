@@ -6,4 +6,4 @@ COPY . /usr/srv/boardgame-bot/
 RUN rm -rf /usr/srv/boardgame-bot/.git
 RUN npm install
 
-CMD [ "npm", "production" ]
+CMD [ "npm", "run", "production" ]
